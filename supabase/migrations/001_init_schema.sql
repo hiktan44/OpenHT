@@ -3,14 +3,14 @@
 -- Run this in Supabase SQL Editor
 -- =====================================================
 
--- Enable UUID extension
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+-- Note: We use gen_random_uuid() which is built-in (Postgres 13+)
+-- No need to create specific extensions for UUIDs
 
 -- =====================================================
 -- USERS TABLE
 -- =====================================================
 CREATE TABLE IF NOT EXISTS users (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email TEXT UNIQUE NOT NULL,
     name TEXT,
     avatar_url TEXT,
@@ -27,7 +27,7 @@ CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 -- CONVERSATIONS TABLE
 -- =====================================================
 CREATE TABLE IF NOT EXISTS conversations (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
     title TEXT DEFAULT 'Yeni Sohbet',
     model TEXT DEFAULT 'anthropic/claude-sonnet-4',
@@ -44,7 +44,7 @@ CREATE INDEX IF NOT EXISTS idx_conversations_updated_at ON conversations(updated
 -- MESSAGES TABLE
 -- =====================================================
 CREATE TABLE IF NOT EXISTS messages (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     conversation_id UUID REFERENCES conversations(id) ON DELETE CASCADE,
     role TEXT NOT NULL CHECK (role IN ('user', 'assistant', 'system')),
     content TEXT NOT NULL,
@@ -60,7 +60,7 @@ CREATE INDEX IF NOT EXISTS idx_messages_created_at ON messages(created_at);
 -- ATTACHMENTS TABLE (for file uploads)
 -- =====================================================
 CREATE TABLE IF NOT EXISTS attachments (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     message_id UUID REFERENCES messages(id) ON DELETE CASCADE,
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
     file_name TEXT NOT NULL,
@@ -155,3 +155,4 @@ CREATE TRIGGER update_conversations_updated_at
 -- - Public: No
 -- - File size limit: 50MB
 -- - Allowed mime types: image/*, video/*, application/pdf, text/*, etc.
+
