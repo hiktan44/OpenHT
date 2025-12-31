@@ -52,8 +52,23 @@ except ImportError:
 
 app = FastAPI(title="OpenHT Web UI", version="1.0.0")
 
+
 # Static dosyaları serve et
 app.mount("/static", StaticFiles(directory="web/static"), name="static")
+
+
+@app.on_event("startup")
+async def startup_event():
+    """Uygulama başladığında çalışacak işlemler"""
+    logger.info("OpenHT Web UI başlatılıyor...")
+
+    # DB tablolarını kontrol et/oluştur
+    if DB_AVAILABLE:
+        try:
+            db = get_db()
+            await db.init_db()
+        except Exception as e:
+            logger.error(f"Veritabanı başlatma hatası: {e}")
 
 
 # ===================== Pydantic Modeller =====================

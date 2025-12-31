@@ -261,6 +261,41 @@ class SupabaseClient:
             logger.error(f"Error adding message: {e}")
             return None
 
+    async def init_db(self):
+        """Initialize database tables if they don't exist (Self-Healing)"""
+        if not self.is_connected:
+            return
+
+        logger.info("Checking database schema...")
+
+        # Check if users table exists by trying to select from it
+        try:
+            self._client.table("users").select("id").limit(1).execute()
+        except Exception as e:
+            logger.warning(
+                f"Tables not found, attempting to create schema... Error: {e}"
+            )
+
+            # If selection fails, try to create tables via raw SQL (using rpc if available or raw query)
+            # Since Supabase-py client doesn't support raw SQL execution directly on all versions,
+            # we will use the 'postgres' connection string fallback if possible,
+            # Or reliance on the user manually running it.
+            # However, for this specific request, we will try to use the `setup_db.py` logic internally if possible.
+
+            # Note: The most reliable way in a Python app without direct Postgres connection is usually
+            # to depend on prepared migrations. But here we will log a critical instruction.
+            logger.critical(
+                "DATABASE TABLES MISSING! Please run the following SQL in your database:"
+            )
+            logger.critical(
+                """
+                CREATE TABLE IF NOT EXISTS users (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), email TEXT UNIQUE NOT NULL, name TEXT, avatar_url TEXT, created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW(), last_login TIMESTAMPTZ, settings JSONB DEFAULT '{}'::jsonb);
+                CREATE TABLE IF NOT EXISTS conversations (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), user_id UUID REFERENCES users(id) ON DELETE CASCADE, title TEXT DEFAULT 'Yeni Sohbet', model TEXT DEFAULT 'anthropic/claude-sonnet-4', settings JSONB DEFAULT '{"temperature": 1.0, "max_tokens": 4096}'::jsonb, created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW());
+                CREATE TABLE IF NOT EXISTS messages (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), conversation_id UUID REFERENCES conversations(id) ON DELETE CASCADE, role TEXT NOT NULL CHECK (role IN ('user', 'assistant', 'system')), content TEXT NOT NULL, created_at TIMESTAMPTZ DEFAULT NOW(), metadata JSONB DEFAULT '{}'::jsonb);
+                CREATE TABLE IF NOT EXISTS attachments (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), message_id UUID REFERENCES messages(id) ON DELETE CASCADE, user_id UUID REFERENCES users(id) ON DELETE CASCADE, file_name TEXT NOT NULL, file_type TEXT, file_size INTEGER, storage_path TEXT NOT NULL, created_at TIMESTAMPTZ DEFAULT NOW());
+            """
+            )
+
 
 # Singleton instance
 @lru_cache(maxsize=1)
