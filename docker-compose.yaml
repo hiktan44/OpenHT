@@ -1,5 +1,5 @@
 # =====================================================
-# OpenHT Docker Compose - For Coolify Deployment
+# OpenHT Docker Compose - For Coolify Deployment (Optimized)
 # =====================================================
 
 version: '3.8'
@@ -9,10 +9,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: openht-web
+    # container_name: openht-web  # Coolify'ın yönetmesine bırakalım
     restart: unless-stopped
-    ports:
-      - "8082:8080"
+    # Port mapping'i kaldırıyoruz, Coolify FQDN (sslip.io) üzerinden 8080'e yönlendirecek
+    expose:
+      - 8080
     environment:
       # Supabase Configuration
       - SUPABASE_URL=${SUPABASE_URL}
@@ -25,20 +26,18 @@ services:
       - ENVIRONMENT=${ENVIRONMENT:-production}
       - LOG_LEVEL=${LOG_LEVEL:-info}
     volumes:
-      - ./logs:/app/logs
-      - ./workspace:/app/workspace
+      - openht_logs:/app/logs
+      - openht_workspace:/app/workspace
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 10s
+      start_period: 15s
     labels:
-      # Coolify labels for automatic configuration
       - "coolify.managed=true"
-    networks:
-      - openht-network
 
-networks:
-  openht-network:
-    driver: bridge
+volumes:
+  openht_logs:
+  openht_workspace:
+
