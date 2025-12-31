@@ -5,7 +5,13 @@ import uuid
 from datetime import datetime
 from typing import Dict, List, Literal, Optional
 
-import boto3
+try:
+    import boto3
+
+    BEDROCK_AVAILABLE = True
+except ImportError:
+    BEDROCK_AVAILABLE = False
+    boto3 = None
 
 
 # Global variables to track the current tool use ID across function calls
@@ -38,12 +44,18 @@ class OpenAIResponse:
 class BedrockClient:
     def __init__(self):
         # Initialize Bedrock client, you need to configure AWS env first
+        if not BEDROCK_AVAILABLE:
+            self.client = None
+            self.chat = None
+            return
+
         try:
             self.client = boto3.client("bedrock-runtime")
             self.chat = Chat(self.client)
         except Exception as e:
             print(f"Error initializing Bedrock client: {e}")
-            sys.exit(1)
+            self.client = None
+            self.chat = None
 
 
 # Chat interface class
@@ -173,9 +185,9 @@ class ChatCompletions:
                         "role": bedrock_response.get("output", {})
                         .get("message", {})
                         .get("role", "assistant"),
-                        "tool_calls": openai_tool_calls
-                        if openai_tool_calls != []
-                        else None,
+                        "tool_calls": (
+                            openai_tool_calls if openai_tool_calls != [] else None
+                        ),
                         "function_call": None,
                     },
                 }
