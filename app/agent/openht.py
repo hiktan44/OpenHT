@@ -6,7 +6,7 @@ from app.agent.browser import BrowserContextHelper
 from app.agent.toolcall import ToolCallAgent
 from app.config import config
 from app.logger import logger
-from app.prompt.manus import NEXT_STEP_PROMPT, SYSTEM_PROMPT
+from app.prompt.openht import NEXT_STEP_PROMPT, SYSTEM_PROMPT
 from app.tool import Terminate, ToolCollection
 from app.tool.ask_human import AskHuman
 from app.tool.browser_use_tool import BrowserUseTool
@@ -15,11 +15,13 @@ from app.tool.python_execute import PythonExecute
 from app.tool.str_replace_editor import StrReplaceEditor
 
 
-class Manus(ToolCallAgent):
-    """A versatile general-purpose agent with support for both local and MCP tools."""
+class OpenHT(ToolCallAgent):
+    """Çeşitli görevleri çözebilen, yerel ve MCP araçlarını destekleyen çok yönlü bir ajan."""
 
-    name: str = "Manus"
-    description: str = "A versatile agent that can solve various tasks using multiple tools including MCP-based tools"
+    name: str = "OpenHT"
+    description: str = (
+        "Birden fazla araç kullanarak çeşitli görevleri çözebilen çok yönlü bir ajan"
+    )
 
     system_prompt: str = SYSTEM_PROMPT.format(directory=config.workspace_root)
     next_step_prompt: str = NEXT_STEP_PROMPT
@@ -51,14 +53,14 @@ class Manus(ToolCallAgent):
     _initialized: bool = False
 
     @model_validator(mode="after")
-    def initialize_helper(self) -> "Manus":
-        """Initialize basic components synchronously."""
+    def initialize_helper(self) -> "OpenHT":
+        """Temel bileşenleri senkron olarak başlat."""
         self.browser_context_helper = BrowserContextHelper(self)
         return self
 
     @classmethod
-    async def create(cls, **kwargs) -> "Manus":
-        """Factory method to create and properly initialize a Manus instance."""
+    async def create(cls, **kwargs) -> "OpenHT":
+        """OpenHT örneği oluşturmak ve düzgün şekilde başlatmak için fabrika metodu."""
         instance = cls(**kwargs)
         await instance.initialize_mcp_servers()
         instance._initialized = True
@@ -129,7 +131,7 @@ class Manus(ToolCallAgent):
         self.available_tools.add_tools(*self.mcp_clients.tools)
 
     async def cleanup(self):
-        """Clean up Manus agent resources."""
+        """OpenHT ajan kaynaklarını temizle."""
         if self.browser_context_helper:
             await self.browser_context_helper.cleanup_browser()
         # Disconnect from all MCP servers only if we were initialized

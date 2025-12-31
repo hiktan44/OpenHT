@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, ClassVar, Dict, Optional
 
-from daytona import Daytona, DaytonaConfig, Sandbox, SandboxState
+from daytona_sdk import Daytona, DaytonaConfig, Sandbox, SandboxState
 from pydantic import Field
 
 from app.config import config
@@ -11,7 +11,6 @@ from app.tool.base import BaseTool
 from app.utils.files_utils import clean_path
 from app.utils.logger import logger
 
-
 # load_dotenv()
 daytona_settings = config.daytona
 daytona_config = DaytonaConfig(
@@ -19,7 +18,14 @@ daytona_config = DaytonaConfig(
     server_url=daytona_settings.daytona_server_url,
     target=daytona_settings.daytona_target,
 )
-daytona = Daytona(daytona_config)
+
+# Only initialize Daytona client if API key is provided
+daytona = None
+if daytona_config.api_key:
+    try:
+        daytona = Daytona(daytona_config)
+    except Exception as e:
+        logger.warning(f"Failed to initialize Daytona client: {e}")
 
 
 @dataclass

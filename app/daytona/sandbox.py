@@ -1,6 +1,6 @@
 import time
 
-from daytona import (
+from daytona_sdk import (
     CreateSandboxFromImageParams,
     Daytona,
     DaytonaConfig,
@@ -12,7 +12,6 @@ from daytona import (
 
 from app.config import config
 from app.utils.logger import logger
-
 
 # load_dotenv()
 daytona_settings = config.daytona
@@ -38,8 +37,16 @@ if daytona_config.target:
 else:
     logger.warning("No Daytona target found in environment variables")
 
-daytona = Daytona(daytona_config)
-logger.info("Daytona client initialized")
+# Only initialize Daytona client if API key is provided
+daytona = None
+if daytona_config.api_key:
+    try:
+        daytona = Daytona(daytona_config)
+        logger.info("Daytona client initialized")
+    except Exception as e:
+        logger.warning(f"Failed to initialize Daytona client: {e}")
+else:
+    logger.info("Daytona client not initialized - no API key provided")
 
 
 async def get_or_start_sandbox(sandbox_id: str):

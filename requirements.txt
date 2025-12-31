@@ -40,3 +40,9 @@ crawl4ai~=0.6.3
 
 huggingface-hub~=0.29.2
 setuptools~=75.8.0
+
+# Full-stack deployment dependencies
+supabase~=2.10.0
+PyJWT~=2.10.1
+python-multipart~=0.0.20
+bcrypt~=4.2.0

@@ -8,7 +8,7 @@ from app.config import config
 from app.daytona.sandbox import create_sandbox, delete_sandbox
 from app.daytona.tool_base import SandboxToolsBase
 from app.logger import logger
-from app.prompt.manus import NEXT_STEP_PROMPT, SYSTEM_PROMPT
+from app.prompt.openht import NEXT_STEP_PROMPT, SYSTEM_PROMPT
 from app.tool import Terminate, ToolCollection
 from app.tool.ask_human import AskHuman
 from app.tool.mcp import MCPClients, MCPClientTool
@@ -18,11 +18,13 @@ from app.tool.sandbox.sb_shell_tool import SandboxShellTool
 from app.tool.sandbox.sb_vision_tool import SandboxVisionTool
 
 
-class SandboxManus(ToolCallAgent):
-    """A versatile general-purpose agent with support for both local and MCP tools."""
+class SandboxOpenHT(ToolCallAgent):
+    """Çeşitli görevleri çözebilen, yerel ve MCP araçlarını destekleyen sandbox ajanı."""
 
-    name: str = "SandboxManus"
-    description: str = "A versatile agent that can solve various tasks using multiple sandbox-tools including MCP-based tools"
+    name: str = "SandboxOpenHT"
+    description: str = (
+        "Birden fazla sandbox-aracı kullanarak çeşitli görevleri çözebilen çok yönlü bir ajan"
+    )
 
     system_prompt: str = SYSTEM_PROMPT.format(directory=config.workspace_root)
     next_step_prompt: str = NEXT_STEP_PROMPT
@@ -55,14 +57,14 @@ class SandboxManus(ToolCallAgent):
     sandbox_link: Optional[dict[str, dict[str, str]]] = Field(default_factory=dict)
 
     @model_validator(mode="after")
-    def initialize_helper(self) -> "SandboxManus":
-        """Initialize basic components synchronously."""
+    def initialize_helper(self) -> "SandboxOpenHT":
+        """Temel bileşenleri senkron olarak başlat."""
         self.browser_context_helper = BrowserContextHelper(self)
         return self
 
     @classmethod
-    async def create(cls, **kwargs) -> "SandboxManus":
-        """Factory method to create and properly initialize a Manus instance."""
+    async def create(cls, **kwargs) -> "SandboxOpenHT":
+        """SandboxOpenHT örneği oluşturmak için fabrika metodu."""
         instance = cls(**kwargs)
         await instance.initialize_mcp_servers()
         await instance.initialize_sandbox_tools()
@@ -186,7 +188,7 @@ class SandboxManus(ToolCallAgent):
             raise e
 
     async def cleanup(self):
-        """Clean up Manus agent resources."""
+        """OpenHT ajan kaynaklarını temizle."""
         if self.browser_context_helper:
             await self.browser_context_helper.cleanup_browser()
         # Disconnect from all MCP servers only if we were initialized

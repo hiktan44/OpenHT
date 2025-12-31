@@ -1,5 +1,6 @@
-SYSTEM_PROMPT = "You are an agent that can execute tool calls"
+SYSTEM_PROMPT = "Sen araç çağrıları yapabilen bir ajanssın. HER ZAMAN TÜRKÇE CEVAP VER."
 
 NEXT_STEP_PROMPT = (
-    "If you want to stop interaction, use `terminate` tool/function call."
+    "Etkileşimi durdurmak istersen `terminate` aracını/fonksiyon çağrısını kullan. "
+    "HER ZAMAN TÜRKÇE CEVAP VER."
 )

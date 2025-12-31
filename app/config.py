@@ -1,10 +1,15 @@
 import json
+import os
 import threading
 import tomllib
 from pathlib import Path
 from typing import Dict, List, Optional
 
+from dotenv import load_dotenv
 from pydantic import BaseModel, Field
+
+# Load environment variables from .env file
+load_dotenv()
 
 
 def get_project_root() -> Path:
@@ -106,7 +111,7 @@ class SandboxSettings(BaseModel):
 
 
 class DaytonaSettings(BaseModel):
-    daytona_api_key: str
+    daytona_api_key: Optional[str] = Field(None, description="Daytona API key")
     daytona_server_url: Optional[str] = Field(
         "https://app.daytona.io/api", description=""
     )
@@ -240,7 +245,8 @@ class Config:
         default_settings = {
             "model": base_llm.get("model"),
             "base_url": base_llm.get("base_url"),
-            "api_key": base_llm.get("api_key"),
+            # Check environment variable first, then fall back to config file
+            "api_key": os.getenv("OPENROUTER_API_KEY") or base_llm.get("api_key"),
             "max_tokens": base_llm.get("max_tokens", 4096),
             "max_input_tokens": base_llm.get("max_input_tokens"),
             "temperature": base_llm.get("temperature", 1.0),

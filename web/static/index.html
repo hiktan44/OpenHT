@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenHT - AI Studio</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Markdown rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Syntax highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1 class="logo">
+                    <span class="logo-icon">⚡</span>
+                    OpenHT
+                </h1>
+                <button class="new-chat-btn" onclick="createNewChat()">
+                    <span>+</span> Yeni Sohbet
+                </button>
+            </div>
+
+            <div class="conversations-list" id="conversationsList">
+                <!-- Konuşmalar buraya yüklenecek -->
+            </div>
+
+            <div class="sidebar-footer">
+                <div class="api-status" id="apiStatus">
+                    <span class="status-dot"></span>
+                    <span>Bağlı</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="chat-header">
+                <div class="chat-title" id="chatTitle">Yeni Sohbet</div>
+                <button class="settings-btn" onclick="toggleSettings()">
+                    ⚙️ Ayarlar
+                </button>
+            </header>
+
+            <!-- Chat Messages -->
+            <div class="chat-messages" id="chatMessages">
+                <div class="welcome-message" id="welcomeMessage">
+                    <div class="welcome-icon">🤖</div>
+                    <h2>OpenHT'ye Hoş Geldiniz</h2>
+                    <p>Size nasıl yardımcı olabilirim? Programlama, araştırma, dosya işlemleri ve daha fazlası için
+                        buradayım.</p>
+                    <div class="quick-actions">
+                        <button onclick="sendQuickMessage('Python ile basit bir web scraper yaz')">
+                            🐍 Web Scraper
+                        </button>
+                        <button onclick="sendQuickMessage('Türkiye ekonomisi hakkında güncel bilgi ver')">
+                            📊 Ekonomi Bilgisi
+                        </button>
+                        <button onclick="sendQuickMessage('Markdown formatında bir README şablonu oluştur')">
+                            📝 README Şablonu
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Suggestion Chips (AI Studio Style) -->
+            <div class="suggestion-chips" id="suggestionChips">
+                <button class="chip" onclick="sendQuickMessage('Kod yaz')">💻 Kod yaz</button>
+                <button class="chip" onclick="sendQuickMessage('Görsel oluştur')">🎨 Görsel oluştur</button>
+                <button class="chip" onclick="sendQuickMessage('Araştırma yap')">🔍 Araştırma yap</button>
+                <button class="chip" onclick="sendQuickMessage('Dosya analiz et')">📄 Dosya analiz et</button>
+                <button class="chip" onclick="sendQuickMessage('Özet çıkar')">📝 Özet çıkar</button>
+                <button class="chip" onclick="sendQuickMessage('Çeviri yap')">🌐 Çeviri yap</button>
+            </div>
+
+            <!-- Attached Files Preview -->
+            <div class="attached-files" id="attachedFiles" style="display: none;">
+                <div class="attached-files-header">
+                    <span>📎 Ekli Dosyalar</span>
+                    <button class="clear-files-btn" onclick="clearAllFiles()">Temizle</button>
+                </div>
+                <div class="attached-files-list" id="attachedFilesList"></div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="input-area">
+                <!-- Action Buttons Row -->
+                <div class="input-actions">
+                    <input type="file" id="fileInput" multiple hidden onchange="handleFileSelect(event)">
+                    <button class="action-btn" onclick="document.getElementById('fileInput').click()"
+                        title="Dosya Yükle">
+                        <span>📎</span>
+                        <span class="btn-text">Dosya</span>
+                    </button>
+
+                    <input type="file" id="imageInput" accept="image/*,video/*" multiple hidden
+                        onchange="handleMediaSelect(event)">
+                    <button class="action-btn" onclick="document.getElementById('imageInput').click()"
+                        title="Görsel/Video">
+                        <span>🖼️</span>
+                        <span class="btn-text">Medya</span>
+                    </button>
+
+                    <button class="action-btn" onclick="showLinkDialog()" title="Link Ekle">
+                        <span>🔗</span>
+                        <span class="btn-text">Link</span>
+                    </button>
+
+                    <button class="action-btn" onclick="toggleCodeMode()" id="codeModeBtn" title="Kod Modu">
+                        <span>⌨️</span>
+                        <span class="btn-text">Kod</span>
+                    </button>
+                </div>
+
+                <div class="input-container">
+                    <textarea id="messageInput" placeholder="Mesajınızı yazın veya dosya sürükleyip bırakın..." rows="1"
+                        onkeydown="handleKeyDown(event)" ondrop="handleFileDrop(event)"
+                        ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)"></textarea>
+                    <button class="send-btn" onclick="sendMessage()" id="sendBtn">
+                        <span class="send-icon">➤</span>
+                    </button>
+                </div>
+                <div class="input-footer">
+                    <span class="model-badge" id="currentModel">claude-sonnet-4</span>
+                    <span class="file-count" id="fileCount" style="display: none;">0 dosya ekli</span>
+                    <span class="hint">Enter ile gönder, Shift+Enter ile yeni satır • Dosya sürükle-bırak
+                        desteklenir</span>
+                </div>
+            </div>
+        </main>
+
+        <!-- Link Dialog -->
+        <div class="dialog-overlay" id="linkDialog" style="display: none;" onclick="closeLinkDialog(event)">
+            <div class="dialog" onclick="event.stopPropagation()">
+                <div class="dialog-header">
+                    <h3>🔗 Link Ekle</h3>
+                    <button class="close-btn" onclick="closeLinkDialog()">✕</button>
+                </div>
+                <div class="dialog-content">
+                    <input type="url" id="linkUrl" placeholder="https://example.com" class="dialog-input">
+                    <input type="text" id="linkTitle" placeholder="Link başlığı (opsiyonel)" class="dialog-input">
+                </div>
+                <div class="dialog-actions">
+                    <button class="dialog-btn secondary" onclick="closeLinkDialog()">İptal</button>
+                    <button class="dialog-btn primary" onclick="addLink()">Ekle</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Panel -->
+        <aside class="settings-panel" id="settingsPanel">
+            <div class="settings-header">
+                <h2>Ayarlar</h2>
+                <button class="close-btn" onclick="toggleSettings()">✕</button>
+            </div>
+
+            <div class="settings-content">
+                <div class="setting-group">
+                    <label>Model</label>
+                    <select id="modelSelect" onchange="updateModel()">
+                        <!-- Modeller JS ile yüklenecek -->
+                    </select>
+                </div>
+
+                <div class="setting-group">
+                    <label>Temperature: <span id="tempValue">1.0</span></label>
+                    <input type="range" id="temperatureSlider" min="0" max="2" step="0.1" value="1.0"
+                        oninput="updateTemperature()">
+                    <div class="range-labels">
+                        <span>Tutarlı</span>
+                        <span>Yaratıcı</span>
+                    </div>
+                </div>
+
+                <div class="setting-group">
+                    <label>Max Tokens</label>
+                    <input type="number" id="maxTokensInput" value="4096" min="256" max="128000"
+                        onchange="updateMaxTokens()">
+                </div>
+
+                <div class="setting-group">
+                    <label>Sistem Prompt'u</label>
+                    <textarea id="systemPrompt" placeholder="Opsiyonel sistem prompt'u..."
+                        onchange="updateSystemPrompt()"></textarea>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">OpenHT düşünüyor...</div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+
+</html>

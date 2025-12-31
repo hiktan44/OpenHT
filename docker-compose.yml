@@ -1,0 +1,44 @@
+# =====================================================
+# OpenHT Docker Compose - For Coolify Deployment
+# =====================================================
+
+version: '3.8'
+
+services:
+  openht:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: openht-web
+    restart: unless-stopped
+    ports:
+      - "${PORT:-8080}:8080"
+    environment:
+      # Supabase Configuration
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
+      # OpenRouter API
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      # App Configuration
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key}
+      - ENVIRONMENT=${ENVIRONMENT:-production}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    volumes:
+      - ./logs:/app/logs
+      - ./workspace:/app/workspace
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    labels:
+      # Coolify labels for automatic configuration
+      - "coolify.managed=true"
+    networks:
+      - openht-network
+
+networks:
+  openht-network:
+    driver: bridge
